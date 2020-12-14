@@ -1,0 +1,59 @@
+<%- include('partials/header'); %>
+<div class="container">
+    <div class="row">
+        <% if(records){    %>
+        <div id="signupbox" style="margin-top:50px" class="mainbox col-md-6 col-md-offset-3 col-sm-8 col-sm-offset-2">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <div class="panel-title">Edit Department </div>
+                     </div>  
+                <div class="panel-body" >
+                    <form action="/department/edit/" id="DepartmentForm" class="form-horizontal" method="post"  role="form">
+                      <input type="hidden" name="id" value="<%= records._id %>">
+                        <div class="form-group">
+                       
+                            <label for="username" class="col-md-3 control-label">Department Name</label>
+                            <div class="col-md-9">
+                                <input type="text" class="form-control" name="department_name" value="<%= records.Dep_Name %>" placeholder="Enter  Department Name">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                       
+                            <label for="username" class="col-md-3 control-label">Department Code</label>
+                            <div class="col-md-9">
+                                <input type="text" class="form-control" name="department_code" value="<%= records.Dep_Code %>" placeholder="Enter  Department Code">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                       
+                            <label for="username" class="col-md-3 control-label">Department Details</label>
+                            <div class="col-md-9">
+                                <textarea class="form-control" id="editor"  name="dep_details" rows="5" placeholder="Enter Department Details"><%= records.Details %></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                                                                 
+                            <div class="col-md-offset-3 col-md-9">
+                            <input type="submit" name="submit" value="Update Department" class="btn btn-primary">   
+                            </div>
+                        </div>
+                        
+                        <p><a href="/view-all-Department">View All Department</a></p>
+                         
+                        
+                        
+                        
+                    </form>
+                 </div>
+            </div>
+            <script>
+                CKEDITOR.replace( 'editor' );
+            </script> 
+       
+       
+        
+ </div> 
+ <%   } %>
+    </div>
+  </div>
+  <%- include('partials/footer'); %>

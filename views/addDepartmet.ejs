@@ -1,0 +1,67 @@
+
+ <%- include('partials/header'); %>
+<div class="container">
+    <div class="row">
+
+        <div id="signupbox" style="margin-top:50px" class="mainbox col-md-6 col-md-offset-3 col-sm-8 col-sm-offset-2">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <div class="panel-title"> Add New Department</div>
+                     </div>  
+                <div class="panel-body" >
+                    <form action="/save-new-department" id="EmployeeForm" class="form-horizontal" method="post"  role="form">
+                        <% if(errors !=''){%>
+                            <% if(errors.departmetName !="") { %>
+                            <p style="text-align: center;color:red;"><%= errors.departmetName.msg %></p>
+                            <% } %>
+                              <% } %>
+                              <% if(success !=''){%>
+                                <p style="text-align: center;color:green;"><%= success %></p>
+                                  <% } %>
+                                  <% if(msg !=''){%>
+                                    <p style="text-align: center;color:orangered;"><%= msg %></p>
+                                      <% } %>
+                        <div class="form-group">
+                        
+                            <label for="username" class="col-md-3 control-label">Department Name</label>
+                            <div class="col-md-9">
+                                <input type="text" class="form-control" name="departmetName" placeholder="Enter Department Name">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                        
+                            <label for="username" class="col-md-3 control-label">Department Code</label>
+                            <div class="col-md-9">
+                                <input type="text" class="form-control" name="departmet_code" placeholder="Enter Department Code">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="username" class="col-md-3 control-label">Department Details</label>
+                            <div class="col-md-9">
+                                <textarea class="form-control" id="editor" name="dep_details" rows="5" placeholder="Enter Department Details"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group">                                      
+                            <div class="col-md-offset-3 col-md-9">
+                            <input type="submit" name="submit" value="Add Department" class="btn btn-primary">   
+                            </div>
+                        </div>
+                        
+                        <p><a href="/view-all-Department">View All Department Lists</a></p>
+                         
+                        
+                        
+                        
+                    </form>
+                 </div>
+            </div>
+            <script>
+                CKEDITOR.replace( 'editor' );
+            </script> 
+       
+       
+        
+ </div> 
+    </div>
+  </div>
+  <%- include('partials/footer'); %>

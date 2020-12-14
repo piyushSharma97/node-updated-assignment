@@ -1,0 +1,70 @@
+
+<%- include('partials/header'); %>
+<div class="container">
+    <div class="row">
+
+        <div id="signupbox" style="margin-top:50px" class="mainbox col-md-6 col-md-offset-3 col-sm-8 col-sm-offset-2">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                
+                    <div class="panel-title"> Add New Employee</div>
+                     </div>  
+                <div class="panel-body" >
+                    <form action="/save-new-employee" id="EmployeesForm" class="form-horizontal" method="post"  role="form">
+                       
+                        <% if(errors !=''){%>
+                            <p style="text-align: center;color:red;"><%= errors.employee_name.msg %></p>
+                            <% } %>
+                         
+                              <% if(success !=''){%>
+                                <p style="text-align: center;color:green;"><%= success %></p>
+                                  <% } %>
+                                  <% if(msg !=''){%>
+                                    <p style="text-align: center;color:orange;"><%= msg %></p>
+                                      <% } %>  
+                           <div class="form-group">
+                              <label for="username" class="col-md-3 control-label">Employee Name</label>
+                              <div class="col-md-9">
+                                  <input type="text" class="form-control" name="employee_name"  placeholder="Enter Employee Name">
+                              </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="username" class="col-md-3 control-label">Employee Code</label>
+                                <div class="col-md-9">
+                                    <input type="text" class="form-control" name="emp_code"  placeholder="Enter Employee Code">
+                                </div>
+                              </div>
+                        <div class="form-group">
+                            <label for="username" class="col-md-3 control-label">Department Name</label>
+                            <div class="col-md-9">
+                               <select class="form-control" name="employee_dep_name">
+                                   <option value="">Select Department</option>
+                                   <% if(data.length > 0){
+                                    data.forEach(function(row){
+                                    %>
+                                   <option value="<%= row.Dep_Name %>"><%= row.Dep_Name %></option>
+                                   <%  }) } %>
+                                  </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="username" class="col-md-3 control-label">Date of Joining</label>
+                            <div class="col-md-9">
+                                <input type="date" class="form-control" name="employee_doj"  placeholder="Enter Employee Name">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                                                        
+                            <div class="col-md-offset-3 col-md-9">
+                            <input type="submit" name="submit" value="Add Employee" class="btn btn-primary">   
+                            </div>
+                        </div>
+                        
+                        <p><a href="/EmployeesDetails/1">View All Employees Lists</a></p>                    
+                    </form>
+                 </div>
+            </div>  
+ </div> 
+    </div>
+  </div>
+  <%- include('partials/footer'); %>

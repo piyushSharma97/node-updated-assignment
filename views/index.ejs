@@ -1,0 +1,30 @@
+
+    <%- include('partials/header'); %>
+    <h1><%= title %></h1>
+    <p>Welcome to <%= title %></p>
+    <div class="container">
+      <div class="row">
+          <h1> Dashboard</h1>
+          <br>
+      
+    </div>
+    <div class="col-sm-4 col-xs-12">
+      <div class="info-box">
+          <span class="info-box-icon bg-aqua"><i class="fas fa-user"></i></span>
+          <div class="info-box-content">
+              <span class="info-box-text">Total Number of  Employees</span>
+              <span class="info-box-number"><%= TotalEmployee %></span>
+          </div>
+      </div>
+  </div>
+  <div class="col-sm-4 col-xs-12">
+    <div class="warning-box">
+        <span class="info-box-icon bg-warning"><i class="fas fa-briefcase"></i></span>
+        <div class="info-box-content">
+            <span class="info-box-text">Total Numner of Departments</span>
+            <span class="info-box-number"><%= TotalDepartment %></span>
+        </div>
+    </div>
+</div>
+  </div>
+  <%- include('partials/footer'); %>
