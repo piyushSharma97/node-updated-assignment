@@ -3,12 +3,12 @@ var mongoosePaginate = require('mongoose-paginate');
 const { Schema }  = mongoose
 
 const departmentSchema = new Schema({
-    Dep_Name:{type: String,
+    departmentName:{type: String,
         unique: true },
-    Dep_id  :Number,
-    Dep_Code:{type: String,
+    departmentId  :Number,
+    departmentCode:{type: String,
         unique: true },
-    Details:String,
+    departmentDetails:String,
 })
 departmentSchema.plugin(mongoosePaginate);
 module.exports = mongoose.model('Department',departmentSchema)

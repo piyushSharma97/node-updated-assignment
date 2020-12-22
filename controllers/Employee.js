@@ -1,15 +1,15 @@
 var express = require('express');
-
+const { body, validationResult } = require('express-validator');
 const resultAggregate=(perPage,page,departmentName)=>{
     return new Promise((resolve,reject)=>{
       EmployeeModal.aggregate(
         [
-          {$match:{Department:departmentName}},
+          {$match:{employeeDepartment:departmentName}},
           {
             $lookup:{
               from:'departments',
-              localField:'Department',
-              foreignField:'Dep_Name',
+              localField:'employeeDepartment',
+              foreignField:'departmentName',
               as:'department_name'
             }
           },
@@ -21,7 +21,7 @@ const resultAggregate=(perPage,page,departmentName)=>{
             Emp_Name:1,
             Employee_Code:1,
             DOJ:1,
-            Department:"$department_name.Dep_Name",
+            Department:"$department_name.departmentName",
             }
          }
         ]
@@ -36,7 +36,7 @@ const resultAggregate=(perPage,page,departmentName)=>{
   }
   async function searchResult(query){
     return new Promise(async(resolve,reject)=>{
-      let response = await EmployeeModal.find({"Emp_Name": { '$regex': new RegExp(query, "i")}}).exec()
+      let response = await EmployeeModal.find({"employeeName": { '$regex': new RegExp(query, "i")}}).exec()
       if(response!=''){
         resolve(response)
       }else{
@@ -50,8 +50,14 @@ var DepartmentModal = require('../modals/DepartmentModal');
 exports.new_employee_page = async (req,res,next)=>{
     try{
       var data = await DepartmentModal.find({}).exec()
-   
-      res.render('addEmployee',{ title: 'Add New Employees',errors:'',success:'',data:data ,msg:'' })
+  let senddata={
+    error:'',
+    success:'',
+    department:data.departmentName||"",
+    msg:''
+  }   
+  res.status(200).json(senddata)
+      // res.render('addEmployee',{ title: 'Add New Employees',errors:'',success:'',data:data ,msg:'' })
     }catch(e){
       res.status(401).json(e)
     }
@@ -59,27 +65,41 @@ exports.new_employee_page = async (req,res,next)=>{
 
   exports.save_new_employee = async (req,res,next)=>{
     try{
-      var data = await DepartmentModal.find({}).exec()
+      var deaprtment = await DepartmentModal.find({}).exec()
       let errors = validationResult(req);
       if (!errors.isEmpty()) {
-        res.render('addEmployee', { title: 'Add New  Employees',msg:'', errors:errors.mapped(),success:'',data:data});
+        let sendData={
+          error:errors.mapped(),
+          success:'',
+          data:"",
+          msg:'',
+          department:deaprtment||""
+        }
+        res.status(402).json(sendData)
       }else{
-    
-        let {employee_name} = req.body
-        let { employee_dep_name } = req.body
-        let { employee_doj } = req.body
-        let {emp_code} =  req.body
+       
+        let {employee_name,employee_dep_name,employee_doj,employee_code} = req.body
         let employeesDetails = new EmployeeModal({
-          Emp_Name:employee_name,
-          Employee_Code:emp_code,
-          Department:employee_dep_name,
-          DOJ:employee_doj
+          employeeName:employee_name,
+          employeeCode:employee_code,
+          employeeDepartment:employee_dep_name,
+          dateOfJoining:employee_doj
         })
+      
         employeesDetails.save(async function(err,data){
           if (err){
+            res.status(401).json(err)
             return console.error(err)
+          }   
+          let sendData={
+            error:"",
+            success:'Employee Added Successfully',
+            data:data,
+            msg:'',
+            department:deaprtment||""
           }
-          res.render('addEmployee',{title: 'Add New Employees',errors:'',success:'Employee Added Successfully',data:data,msg:'' })
+          res.status(201).json(sendData)
+          // res.render('addEmployee',{title: 'Add New Employees',errors:'',, })
         })
       }
     }catch(e){
@@ -89,25 +109,29 @@ exports.new_employee_page = async (req,res,next)=>{
 
   exports.EmployeesDetails =async(req,res,next)=>{
     try{
-      var deprtment = await DepartmentModal.find({}).exec()
-      var perPage = 3
-        var page = req.params.page || 1
-        let link =`/EmployeesDetails/`
+   
+         var perPage = 3
+        var currentPage = req.params.page|| 1;
      EmployeeModal.find({})
-     .skip((perPage * page) - perPage)
+     .skip((perPage * currentPage) - perPage)
      .limit(perPage)
      .exec(function(err, data) {
-      EmployeeModal.countDocuments().exec(function(err, count) {
+      if (err) return next(err)
+      EmployeeModal.countDocuments().exec(async function(err, count) {
+        let from =(perPage * currentPage) - perPage+1
+        let to =from+perPage-1
              if (err) return next(err)
-            res.render('showEmloyees',{
-              title:'List of All Employees',
-              data:deprtment,
-              current: page,
-              records:data,
-              query:'',
-              link:link,
-              pages: Math.ceil(count / perPage)
-            })
+              let send_data={
+                from:from,
+                to:to,
+                perPage:perPage,
+                currentPage:Number(currentPage),
+                lastPage:Math.ceil(count / perPage),
+           
+                total:count,
+                content:[...data]
+              }
+          res.status(200).json(send_data)
          })
      })
     }catch(e){
@@ -120,34 +144,32 @@ exports.new_employee_page = async (req,res,next)=>{
     try{
       let perPage = 2
       let page = req.params.page||1
-      let {deprtment} = req.params
-      let aggregateResult = await resultAggregate(perPage,page,deprtment)
-      let count = await EmployeeModal.countDocuments({Department:deprtment}).exec()
-      var department = await DepartmentModal.find({}).exec()
-      let link =`/employee_by_department/${deprtment}/`
-      res.render('showEmloyees',{
-        title:'List of All Employees',
-        data:department,
-        current: page,
-        query:'',
-        records:aggregateResult,
-         link:link,
-        pages: Math.ceil(count / perPage)
-      })
+     
+      let {department} = req.params
+      let aggregateResult = await resultAggregate(perPage,page,department)
+      let count = await EmployeeModal.countDocuments({employeeDepartment:department}).exec()
+      var departmentdata = await DepartmentModal.find({}).exec()
+      let link =`/employee_by_department/${department}/`
+      let send_data={
+        from:1,
+        to:Math.ceil(count / perPage),
+        perPage:perPage,
+        currentPage:Number(page),
+        link:link,
+        total:count||"",
+        content:{
+          department:departmentdata||"",
+          employee:aggregateResult||""
+        }
+      }
+
+      res.status(200).json(send_data)
     }catch(e){
       res.status(401).json(e)
     }
    
   }
 
-  exports.get_edit_employee =async(req,res,next)=>{
-    let id  = req.params.id
-    var editEmp = await EmployeeModal.findById(id).exec()
-  
-    var data = await DepartmentModal.find({}).exec()
-  
-      res.render('editEmployee',{title:'Edit a Employee',errors:'',success:'',records:editEmp,id:id,data:data}) 
-  }
 
   exports.post_edit_employee =async (req,res,next)=>{
     try{
@@ -156,23 +178,29 @@ exports.new_employee_page = async (req,res,next)=>{
         return res.status(400).json({ errors: errors.array() });
       }
       try{
-        let {id} = req.body
-        let { employee_name } = req.body
-        let { emp_depart_name } =req.body
-        let  {emp_code} = req.body
-        // let { employee_doj } = req.body
+        let {id} = req.params
+        let employeeData = await EmployeeModal.findById(id).exec()
+        let {employeeName,employeeCode,employeeDepartment,dateOfJoining} =employeeData  
+
+        let { employee_name,employee_depart_name,employee_code,employee_doj } = req.body
         EmployeeModal.findByIdAndUpdate(id,{
-          Emp_Name:employee_name,
-          Department:emp_depart_name,
-          Employee_Code:emp_code
+          employeeName:employee_name || employeeName,
+          employeeDepartment:employee_depart_name || employeeDepartment,
+          employeeCode:employee_code || employeeCode,
+          dateOfJoining:employee_doj ||dateOfJoining
       
-        },async function(err,doc){
+        },{new: true},async function(err,doc){
           if (err){ 
             console.log(err) 
         }
-      res.redirect('/EmployeesDetails/1')
+ let send_data={
+   data:doc,
+   success:'Employee edited sucessfully'
+ }
+ res.status(201).json(send_data)
         })
-      }catch(error){
+      }
+      catch(error){
        res.status(400).send(error)
       }
     }catch(e){
@@ -182,13 +210,18 @@ exports.new_employee_page = async (req,res,next)=>{
 
   exports.delete_employee = async (req,res,next)=>{
     try{
-      let id = req.params.id
-      var Empdelete=EmployeeModal.findByIdAndDelete(id).exec();
-      Empdelete.exec((err)=>{
+      let {id} = req.params
+      var Employeedelete= EmployeeModal.findByIdAndDelete(id);
+
+      Employeedelete.exec((err,doc)=>{
         if(err){
           console.error(err);
         }
-        res.redirect('/')
+       let send={
+         success:'Employee deleted successfully',
+         response:doc
+       }
+       res.status(200).json(send)
       })
     }catch(e){
       res.status(401).json(e)
@@ -197,53 +230,19 @@ exports.new_employee_page = async (req,res,next)=>{
   }
 
   exports.Employeesearch =async (req,res,next)=>{
-    let query = req.body.searchName
+    let query = req.params.name
    try{
     let response = await searchResult(query)
-  
-    var data = await DepartmentModal.find({}).exec()
+    var departmentdata = await DepartmentModal.find({}).exec()
     let link = `/Employeesearch/`
     let result ={
-      total_dep:data,
+      department:departmentdata,
       linl:link,
       serchResult:response
     }
-    //res.status(200).json({result})
-      res.render('showEmloyees',{
-        title:'List of Search Employees',
-        current: 1,
-        records:response,
-        link:link,
-        data:data,
-        query:query,
-        pages: 1
-      })
+    res.status(200).json({result})
    }catch(e){
   res.status(401).json(e)
    }
   
   }
-
-  exports.autocomplete =function(req, res, next){
-    console.log(req.query);
-    console.log(req.body);
-      var regex = new RegExp(req.query["term"],'i')
-      var employeeFilter =EmployeeModal.find({Emp_Name:regex},{'Emp_Name':1}).sort({"updated_at":-1}).sort({"created_at":-1}).limit(20); 
-      employeeFilter.exec(function(err,data){
-        var result =[]
-        if(!err){
-          if(data && data.length && data.length>0){
-            data.forEach(user => {
-              let obj ={
-                id:user._id,
-                label:user.Emp_Name
-              };
-              result.push(obj)
-            });
-          }
-          res.jsonp(result)
-        }
-       
-      })
-      
-       }

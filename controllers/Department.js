@@ -1,64 +1,63 @@
 var express = require('express');
 var DepartmentModal = require('../modals/DepartmentModal');
 var EmployeeModal = require('../modals/EmployeeModal')
-
-exports.department_add_page =(req,res,next)=>{
-    res.render('addDepartmet',{ title: 'Add New  Department',errors:'',success:'',msg:''})
-  }
+const { body, validationResult } = require('express-validator');
+// exports.department_add_page =(req,res,next)=>{
+//     res.render('addDepartmet',{ title: 'Add New  Department',errors:'',success:'',msg:''})
+//   }
 
   exports.save_new_department=(req,res,next)=>{
     try{
-      var millisecond = new Date().getUTCMilliseconds();
-      var randomNo = Math.floor(Math.random()*211+3)
-      let {departmetName} = req.body
-      let {departmet_code} = req.body
-      let { dep_details } = req.body
-      let dep_id = randomNo+millisecond
+     
       let errors = validationResult(req);
-      console.log(errors.mapped());
       if (!errors.isEmpty()) {
-        res.render('addDepartmet', { title: 'Add New  Department', errors:errors.mapped(),success:'',msg:''});
+        let error={
+          error:errors.mapped(),
+          msg:'Correct the error'
+        }
+        res.status(402).json({error})
       }else{
+        var millisecond = new Date().getUTCMilliseconds();
+        var randomNo = Math.floor(Math.random()*211+3)
+        let {departmet_Name,departmet_code,department_details} = req.body
+        let department_id = randomNo+millisecond
+
         var depdatmentDetails  = new DepartmentModal({
-          Dep_Name:departmetName,
-          Dep_id:dep_id,
-          Dep_Code:departmet_code,
-          Details:dep_details
+          departmentName:departmet_Name,
+          departmentId:department_id,
+          departmentCode:departmet_code,
+          departmentDetails:department_details
         })
         depdatmentDetails.save(function(err,data){
           if (err){
+            res.status(402).json(err)
             return console.error(err)
           }
-        res.render('addDepartmet',{title: 'Add New  Department',errors:'', success:'Department  inserted successfully',msg:''})
+          let send={
+            errors:'', success:'Department inserted successfully',msg:'',data:data
+          }
+          res.status(201).json(send)
         })
       }
-  
     }catch(e){
       res.status(401).json(e)
     }
-  
-  
   }
 
-  exports.view_search_Department = async(req,res)=>{
+  exports.departmentSearch = async(req,res)=>{
     try{
-      var perPage = 2
-      var page = req.params.page || 1
-     var queryDept =  req.query.search_dept||""
-     DepartmentModal.find({"Dep_Name": { '$regex': new RegExp(queryDept, "i")}})
-     .skip((perPage * page) - perPage)
-     .limit(perPage)
+
+     var queryDepartment =  req.params.searchname
+     DepartmentModal.find({"departmentName": { '$regex': new RegExp(queryDepartment, "i")}})
      .exec(function(err, data) {
-       console.log(data);
-      DepartmentModal.countDocuments({"Dep_Name": { '$regex': new RegExp(queryDept, "i")}}).exec(function(err, count) {
-             if (err) return next(err)
-            res.status(200).render('showDepartments',{
-              title:'Show  Department',
-              current: page,
-              records:data,
-              pages: Math.ceil(count / perPage)
-            })
-         })
+     if(err){
+       return res.status(402).json({err})
+     }
+     let send_data={
+       keyword:queryDepartment,
+       response:data
+     }
+res.status(200).json(send_data)
      })
   
     }catch(e){
@@ -69,20 +68,30 @@ exports.department_add_page =(req,res,next)=>{
 
   exports.view_all_Department=async(req,res,next)=>{
     try{
+ 
       var perPage = 2
       var page = req.params.page || 1
+    
    DepartmentModal.find({})
    .skip((perPage * page) - perPage)
    .limit(perPage)
    .exec(function(err, data) {
+    if (err) return next(err)
     DepartmentModal.countDocuments().exec(function(err, count) {
+      let from =(perPage * page) - perPage+1
+      let to =from+perPage-1
            if (err) return next(err)
-          res.render('showDepartments',{
-            title:'Show All Department',
-            current: page,
-            records:data,
-            pages: Math.ceil(count / perPage)
-          })
+           let send_data={
+            from: from,
+            to: to,
+            perPage: perPage,
+            currentPage: page,
+            lastPage: Math.ceil(count / perPage),
+            total: count,
+            content: [...data]
+         }
+         
+res.status(200).json(send_data)
        })
    })
     }catch(e){
@@ -90,61 +99,32 @@ exports.department_add_page =(req,res,next)=>{
     }
     
   }
-  exports.view_all__Department=async(req,res,next)=>{
-    try{
-      let options = {
-        offset:   0,
-        page:  1, 
-        limit:    2
-    };
-    DepartmentModal.paginate({},options).then(function(result){
-    res.render('showDepartments',{
-      title:'Show All Department',
-      records:result.docs,
-      current:options.page,
-      pages: Math.ceil(result.total / result.limit) 
-       })
-     })
-    }catch(e){
-      res.status(401).json(e)
-    }
-    
-  }
-
-  exports.get_edit_dept =async (req,res,next)=>{
-    try{
-      let id = req.params.id
-      let Depdartment = await DepartmentModal.findById(id).exec()
-    
-      res.render('editDepartment',{title:'Edit a Department',errors:'',success:'',records:Depdartment,id:id})
-    }catch(e){
-      res.status(401).json(e)
-    }
-  
-  }
 
   exports.post_edit_dept =async (req,res,next)=>{
     try{
       let errors = validationResult(req);
       if (!errors.isEmpty()) {
-        res.render('addDepartmet', { title: 'Add New  Department', errors:errors.mapped(),success:'',msg:''});
+        return res.status(402).json({error:errors.mapped()})
       }
-       let {id} =req.body
-       let {department_name} = req.body
-       let {department_code} = req.body
-       let {dep_details} = req.body
-    
+       let {id} =req.params
+       let departmentdetail = await DepartmentModal.findById(id).exec()
+       let {departmentName,departmentCode,departmentDetails} = departmentdetail
+       let {department_name,department_code,department_details} = req.body
+ console.log({department_name});
        DepartmentModal.findByIdAndUpdate(id,{
-        Dep_Name:department_name,
-        Dep_Code:department_code,
-        Details:dep_details
-       },async function(err,doc){
+        departmentName:department_name||departmentName,
+        departmentCode:department_code||departmentCode,
+        departmentDetails:department_details||departmentDetails
+       },{new: true},function(err,doc){
         if (err){ 
           console.log(err) 
       }
-      // let response  = await DepartmentModal.find({})
-      // var data =response
-      res.redirect('/view-all-Department')
+    
+  let send={
+    success:'Department is edited succcessfully',
+response:doc
+  }
+res.status(201).json(send)
        })
     }catch(e){
       res.status(401).json(e)
@@ -155,10 +135,14 @@ exports.department_add_page =(req,res,next)=>{
   exports.delete_dept =async (req,res,next)=>{
     let id = req.params.id
     var Depdelete=DepartmentModal.findByIdAndDelete(id);
-    Depdelete.exec((err)=>{
+    Depdelete.exec((err,data)=>{
       if(err){
         console.error(err);
       }
-      res.redirect('/view-all-Department')
+      let send_data={
+        message:'deartment is deleted succesfully',
+       response:data
+      }
+      res.status(200).json(send_data)
     })
   }
