@@ -13,15 +13,13 @@ function checkDepCode(req,res,next){
       let send={
         errorMessage:'Department code lenth must be between 2 and 4'
       }
-     return res.status(402).json(send)
-      //  return res.render('addDepartmet', { title: 'Add New  Department', errors:'',success:'',msg:'Department Code Length is between 2 and 4'});
+     return res.status(422).json(send)
     }else{
       next()
     }
    
   }
 //Department Apis
-  // router.get('/add-new-Department',DepartmentControl.department_add_page)
 
 router.post('/save_new_department',[
   body('departmet_Name','Min Length of Department Name is 3').isLength({ min: 3 }),
@@ -30,8 +28,6 @@ router.post('/save_new_department',[
 router.get('/departmentSearch/:searchname',DepartmentControl.departmentSearch)
 
 router.get('/view_all_Department/:page',DepartmentControl.view_all_Department)
-
-// router.get('/departmentdetail/edit/:id',DepartmentControl.get_edit_dept)
 
 router.put('/editDepartment/:id',DepartmentControl.post_edit_dept)
 

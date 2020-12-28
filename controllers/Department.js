@@ -2,9 +2,6 @@ var express = require('express');
 var DepartmentModal = require('../modals/DepartmentModal');
 var EmployeeModal = require('../modals/EmployeeModal')
 const { body, validationResult } = require('express-validator');
-// exports.department_add_page =(req,res,next)=>{
-//     res.render('addDepartmet',{ title: 'Add New  Department',errors:'',success:'',msg:''})
-//   }
 
   exports.save_new_department=(req,res,next)=>{
     try{
@@ -15,7 +12,7 @@ const { body, validationResult } = require('express-validator');
           error:errors.mapped(),
           msg:'Correct the error'
         }
-        res.status(402).json({error})
+        res.status(400).json({error})
       }else{
         var millisecond = new Date().getUTCMilliseconds();
         var randomNo = Math.floor(Math.random()*211+3)
@@ -30,7 +27,7 @@ const { body, validationResult } = require('express-validator');
         })
         depdatmentDetails.save(function(err,data){
           if (err){
-            res.status(402).json(err)
+            res.status(422).json(err)
             return console.error(err)
           }
           let send={
@@ -40,7 +37,7 @@ const { body, validationResult } = require('express-validator');
         })
       }
     }catch(e){
-      res.status(401).json(e)
+      res.status(400).json(e)
     }
   }
 
@@ -49,9 +46,10 @@ const { body, validationResult } = require('express-validator');
 
      var queryDepartment =  req.params.searchname
      DepartmentModal.find({"departmentName": { '$regex': new RegExp(queryDepartment, "i")}})
+    .sort({"departmentName":1})
      .exec(function(err, data) {
      if(err){
-       return res.status(402).json({err})
+       return res.status(422).json({err})
      }
      let send_data={
        keyword:queryDepartment,
@@ -63,23 +61,23 @@ res.status(200).json(send_data)
     }catch(e){
       res.status(401).json(e)
     }
-    
   }
 
   exports.view_all_Department=async(req,res,next)=>{
     try{
- 
+
       var perPage = 2
       var page = req.params.page || 1
     
    DepartmentModal.find({})
+   .sort({"departmentName":1})
    .skip((perPage * page) - perPage)
    .limit(perPage)
    .exec(function(err, data) {
     if (err) return next(err)
     DepartmentModal.countDocuments().exec(function(err, count) {
       let from =(perPage * page) - perPage+1
-      let to =from+perPage-1
+      let to =perPage * page
            if (err) return next(err)
            let send_data={
             from: from,
@@ -104,13 +102,12 @@ res.status(200).json(send_data)
     try{
       let errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(402).json({error:errors.mapped()})
+        return res.status(422).json({error:errors.mapped()})
       }
        let {id} =req.params
        let departmentdetail = await DepartmentModal.findById(id).exec()
        let {departmentName,departmentCode,departmentDetails} = departmentdetail
        let {department_name,department_code,department_details} = req.body
- console.log({department_name});
        DepartmentModal.findByIdAndUpdate(id,{
         departmentName:department_name||departmentName,
         departmentCode:department_code||departmentCode,
